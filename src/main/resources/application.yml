@@ -1,0 +1,3 @@
+spring:
+  elasticsearch:
+    hosts: http://localhost:9200
