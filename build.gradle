@@ -2,7 +2,7 @@ buildscript {
 	ext {
 		kotlinVersion = '1.3.10'
 		springBootVersion = '2.1.1.RELEASE'
-		elasticSearchVersion = '7.3.1'
+		elasticSearchVersion = '7.1.1'
 	}
 	repositories {
 		mavenCentral()
@@ -55,5 +55,6 @@ dependencies {
 
 	// for es
 	implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:$elasticSearchVersion"
+	implementation "org.elasticsearch:elasticsearch:$elasticSearchVersion"
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }

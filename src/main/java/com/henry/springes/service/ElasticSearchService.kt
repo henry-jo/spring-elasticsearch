@@ -1,7 +1,7 @@
 package com.henry.springes.service
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import mu.KLogging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.get.GetRequest
@@ -31,14 +31,13 @@ class ElasticSearchService(
 
     fun create(
         index: String,
-        type: String,
         message: Any,
         id: String? = null
     ): Mono<String> {
         val request = try {
-            IndexRequest(index, type, id).apply {
+            IndexRequest(index).apply {
                 source(
-                    ObjectMapper().writeValueAsString(message),
+                    jacksonObjectMapper().writeValueAsString(message),
                     XContentType.JSON
                 )
             }
@@ -69,11 +68,10 @@ class ElasticSearchService(
 
     fun <T> findById(
         index: String,
-        type: String,
         id: String?,
         clazz: Class<T>?
     ): Mono<T>? {
-        val request = GetRequest(index, type, id)
+        val request = GetRequest(index, id)
 
         return Mono.create { sink: MonoSink<T> ->
             elasticSearchRestClient.getAsync(
@@ -84,7 +82,8 @@ class ElasticSearchService(
                         if (response.isExists) {
                             var obj: T? = null
                             try {
-                                obj = ObjectMapper().readValue(response.sourceAsString, clazz)
+                                obj =
+                                    jacksonObjectMapper().readValue(response.sourceAsString, clazz)
                             } catch (e: IOException) {
                                 logger.error("[Parsing Error]", e)
                             }
@@ -103,11 +102,9 @@ class ElasticSearchService(
 
     fun <T> findAll(
         indexList: List<String>,
-        type: String,
         clazz: Class<T>
     ): Flux<T> {
         val request = SearchRequest(*indexList.toTypedArray())
-            .types(type)
             .source(SearchSourceBuilder().query(QueryBuilders.matchAllQuery()))
             .indicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN)
 
@@ -120,7 +117,7 @@ class ElasticSearchService(
                         response.hits.forEach { item ->
                             try {
                                 sink.next(
-                                    ObjectMapper().readValue(item.sourceAsString, clazz)
+                                    jacksonObjectMapper().readValue(item.sourceAsString, clazz)
                                 )
                             } catch (e: Exception) {
                                 logger.error("[Parsing Error]", e)
